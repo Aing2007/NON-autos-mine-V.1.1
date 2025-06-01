@@ -6,12 +6,12 @@ import requests
 import pyttsx3 
 
 app = Flask(__name__)
-CORS(app)  # อนุญาตให้มีการเรียกข้าม Origin
+CORS(app)  
 
 def speak(text):# ฟังก์ชันสำหรับการพูด (Text-to-Speech)
-    engine = pyttsx3.init()  # สร้าง engine สำหรับเสียงพูด
+    engine = pyttsx3.init() 
     
-    # ตรวจสอบเสียงที่มีอยู่ในเครื่อง
+    
     voices = engine.getProperty('voices')
      
         
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # ตั้งค่าการวิเคราะห์ความรู้สึก
 classifier = pipeline("sentiment-analysis")
-token = 'yh7G6aKYB37puFgdcsd7nTz7lhAjAMDgWtZbH1TAQEc'  # ใส่ Line Token ที่คุณใช้
+token = 'yh7G6aKYB37puFgdcsd7nTz7lhAjAMDgWtZbH1TAQEc'  # Line Token
 
 # ฟังก์ชันการส่งข้อความ Line Notify
 def send_line_notify(message, token):
