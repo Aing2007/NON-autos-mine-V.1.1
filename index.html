@@ -1,0 +1,105 @@
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Speech to Text (Real-Time)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" class="microphone-icon">
+                <path d="M25 2A8 8 0 0 0 17 10V25A8 8 0 1 0 33 25V10A8 8 0 0 0 25 2Z" fill="#4CAF50"/>
+                <path d="M40 25C40 32.732 33.732 39 26 39H24C16.268 39 10 32.732 10 25" 
+                      stroke="#4CAF50" stroke-width="4" fill="none"/>
+                <line x1="25" y1="39" x2="25" y2="45" stroke="#4CAF50" stroke-width="4"/>
+                <line x1="20" y1="45" x2="30" y2="45" stroke="#4CAF50" stroke-width="4"/>
+            </svg>
+            <h1>Non Autos Mine</h1>
+        </div>
+        <div class="speech-controls">
+            <button id="startRecording" class="friendly-button start">
+                <span>🎙️ เริ่มพูด</span>
+            </button>
+            <button id="stopRecording" class="friendly-button stop" disabled>
+                <span>⏹️ หยุดพูด</span>
+            </button>
+        </div>
+        <div class="result">
+            <h2>คำพูดของคุณ:</h2>
+            <div id="transcript" class="transcript-area">
+                <p class="placeholder">คลิกปุ่ม "เริ่มพูด" เพื่อเริ่มบันทึกเสียง</p>
+            </div>
+        </div>
+    </div>
+    <script src="speech.js"></script>
+    <script>
+        // ฟังก์ชันการส่งข้อความไปยัง Flask API
+        async function sendTextToFlask(text) {
+            const timestamp = new Date().toISOString(); // เก็บเวลาในรูปแบบ ISO
+            try {
+                const response = await fetch('http://127.0.0.1:5000/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text, timestamp: timestamp }),
+                });
+                const data = await response.json();
+                
+                // แสดงข้อความที่ได้รับจาก Flask API
+                document.getElementById("transcript").innerHTML = `<p>${data.received_text}</p>`;
+                
+                // แสดงค่า sentiment ที่ได้รับจาก Flask API
+                const sentiment = data.sentiment;  // รับค่า sentiment ที่ส่งมาจาก Flask
+                document.getElementById("sentiment").innerHTML = `<p>อารมณ์: ${sentiment}</p>`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    
+        // ฟังก์ชันการเริ่มบันทึกเสียง
+        const startButton = document.getElementById('startRecording');
+        const stopButton = document.getElementById('stopRecording');
+    
+        let recognition;
+    
+        // ตรวจสอบว่าบราวเซอร์รองรับ Web Speech API หรือไม่
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'th-TH';  // ใช้ภาษาไทย
+            recognition.interimResults = true;
+    
+            recognition.onstart = function () {
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            };
+    
+            recognition.onend = function () {
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            };
+    
+            recognition.onresult = function (event) {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                sendTextToFlask(transcript);  // ส่งข้อความที่ฟังได้ไปยัง Flask API
+                document.getElementById('transcript').innerHTML = `<p>${transcript}</p>`;  // แสดงข้อความที่ฟังได้
+            };
+    
+            startButton.addEventListener('click', () => {
+                recognition.start();  // เริ่มการฟังเสียง
+            });
+    
+            stopButton.addEventListener('click', () => {
+                recognition.stop();  // หยุดการฟังเสียง
+            });
+        } else {
+            alert("Web Speech API ไม่รองรับในเบราว์เซอร์นี้");
+        }
+    </script>
+    
+    
+</body>
+</html>
